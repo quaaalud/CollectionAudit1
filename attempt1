@@ -1,0 +1,36 @@
+###import four .csv files, Card payments / ACH payments / Saves for Aegis and NVPS
+###combine card payments & ach payments and combine saves for both companies
+###add column for boolean, is customer listed equal times on the new combined reports
+
+import numpy as np
+import pandas as pd
+import re
+
+coll = []
+coll = pd.DataFrame(coll)
+cardpay = pd.read_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\cardpayments1.csv", 
+                      usecols=["Account", "Credit Cards", "UserName", "Insured"])
+cardpay = cardpay.sort_values("UserName")
+
+achpay = pd.read_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\achpayments1.csv", 
+                      usecols=["Account", "ACH", "UserName", "Insured"])
+achpay = achpay.sort_values("UserName")
+coll = coll.append([cardpay, achpay])
+coll.groupby("UserName")
+coll.to_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\allpayments1.csv", index=False)
+
+saves = []
+saves = pd.DataFrame(saves)
+
+save1 = pd.read_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\saves1.csv", 
+                    usecols=["SaveUser", "SaveMethod", "ResponseCode", "ContactName"])
+#save1.groupby("")
+
+save2 = pd.read_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\save2.csv", 
+                    usecols=["SaveUser", "SaveMethod", "ResponseCode", "ContactName"])
+
+saves = saves.append([save1, save2])
+saves.sort_values("SaveUser")
+
+
+print(saves)
