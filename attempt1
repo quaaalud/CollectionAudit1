@@ -1,44 +1,77 @@
 import numpy as np
 import pandas as pd
-import re
+import math
+from collections import Counter
 
 coll = []
 coll = pd.DataFrame(coll)
-cardpay = pd.read_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\cardpayments1.csv", 
-                      usecols=["Account", "Credit Cards", "UserName", "Insured"])
+cardpay = pd.read_csv(r"C:\Users\dludwinski\Desktop\wip\cardpayment9.3_9.9.csv", usecols=["Policy #", "Credit Cards", "UserName", "Insured"])
+cardpay.rename(columns = {"Credit Cards": "PaymentAmount"}, inplace = True)
+cardpay.insert(4, "Seller", "")
 cardpay = cardpay.sort_values("UserName")
 
-achpay = pd.read_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\achpayments1.csv", 
-                      usecols=["Account", "ACH", "UserName", "Insured"])
+achpay = pd.read_csv(r"C:\Users\dludwinski\Desktop\wip\achpayment8.25_9.9.csv", 
+                      usecols=["Policy #", "ACH", "UserName", "Insured"])
+achpay.rename(columns = {"ACH": "PaymentAmount"}, inplace = True)
+achpay.insert(4, "Seller", "")
 achpay = achpay.sort_values("UserName")
+
 coll = coll.append([cardpay, achpay])
+
 coll.insert(4, "Payment?", "")
 coll.sort_values("UserName")
-coll.to_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\allpayments1.csv", index=False)
+coll = coll.reset_index(drop=True)
+#coll.to_csv(r"C:\Users\dludwinski\Desktop\wip\collaudit1", index=False)
 
 saves = []
 saves = pd.DataFrame(saves)
 
-save1 = pd.read_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\saves1.csv", 
-                    usecols=["SaveUser", "SaveMethod", "ResponseCode", "ContactName"])
+save1 = pd.read_csv(r"C:\Users\dludwinski\Desktop\wip\nvpssaves9.5_9.9.csv", usecols=["SaveUser", "SaveMethod", "PolicyNumber", "Customer", "SaveDate"])
+save1.insert(0, "Company", "NVPS")
 
-save2 = pd.read_csv(r"C:\Users\Dale\Desktop\pywip\weeklyreports\save2.csv", 
-                    usecols=["SaveUser", "SaveMethod", "ResponseCode", "ContactName"])
+save2 = pd.read_csv(r"C:\Users\dludwinski\Desktop\wip\aegissaves9.5_9.9.csv", usecols=["SaveUser", "SaveMethod", "PolicyNumber", "Customer", "SaveDate"])
+save2.insert(0, "Company", "AEGIS")
 
 saves = saves.append([save1, save2])
-saves.sort_values("SaveUser")
-c = ["Save User", "Save Method", "ResponseCode", "ContactName"]
-saves.columns = c
-coll = coll.append([saves])
+saves["SaveDate"] = pd.to_datetime(saves["SaveDate"])
+saves["SaveDate"] = saves["SaveDate"].dt.date
+saves.sort_values("SaveDate")
+
+saves.insert(0, "In Date Range?", "")
+
+c = ["08/31/2021"]
+c = pd.DataFrame(a)
+#c = a.to_datetime
+#saves["In Date Range?"] = (saves["SaveDate"] <= a) == True
+
+
+
 coll.sort_values("UserName")
 coll = coll.reset_index(drop=True)
 
-#coll["Payment?"] = coll.loc[coll["ContactName"].str.contains(coll.loc[coll["Insured"]]) == True]
 
+a = coll["Policy #"].to_numpy()[:, None]
+b = saves["PolicyNumber"].to_numpy()
+count = (a == b).sum(axis=1)
 
+df1 = ((count == 1))
+df1 = pd.DataFrame(df1)
+coll["Payment?"] = df1
 
-print(coll)
+coll.pivot(index="PolicyNumber", columns="Policy #")
 
+print(coll["Payment?"])
 
+coll.to_csv(r"C:\Users\dludwinski\Desktop\wip\collectionaudit1.csv", index=False)
+
+#audit0 = Counter(coll["Policy #"])
+#audit1 = Counter(coll["PolicyNumber"])
+
+#d_audit = ()
+#inboth = set(audit0) & set(audit1)
+
+#def audit():
+#    for elem in inboth:
+#        if audit1[elem] == 1: print(elem)
 
 
