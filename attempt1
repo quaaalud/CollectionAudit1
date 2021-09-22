@@ -1,77 +1,76 @@
-import numpy as np
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Sep 20 16:56:38 2021
+
+@author: dludwinski
+"""
+
 import pandas as pd
-import math
-from collections import Counter
+#import numpy as np
+#import re
 
-coll = []
-coll = pd.DataFrame(coll)
-cardpay = pd.read_csv(r"C:\Users\dludwinski\Desktop\wip\cardpayment9.3_9.9.csv", usecols=["Policy #", "Credit Cards", "UserName", "Insured"])
-cardpay.rename(columns = {"Credit Cards": "PaymentAmount"}, inplace = True)
-cardpay.insert(4, "Seller", "")
-cardpay = cardpay.sort_values("UserName")
+cpayments = pd.read_csv (r"C:\Users\dludwinski\Desktop\PaymentsByWebReport.csv",
+                         usecols=["Policy #", "Insured",
+                                  "UserName", "Credit Cards", "Date"])
+cpayments.rename(columns={"Credit Cards": "Payment Amount"}, inplace=True)
 
-achpay = pd.read_csv(r"C:\Users\dludwinski\Desktop\wip\achpayment8.25_9.9.csv", 
-                      usecols=["Policy #", "ACH", "UserName", "Insured"])
-achpay.rename(columns = {"ACH": "PaymentAmount"}, inplace = True)
-achpay.insert(4, "Seller", "")
-achpay = achpay.sort_values("UserName")
+apayments = pd.read_csv (r"C:\Users\dludwinski\Desktop\PaymentsByWebReport (1).csv",
+                         usecols=["Policy #", "Insured",
+                                  "UserName", "ACH", "Date"])
+apayments.rename(columns={"ACH": "Payment Amount"}, inplace=True)
 
-coll = coll.append([cardpay, achpay])
-
-coll.insert(4, "Payment?", "")
-coll.sort_values("UserName")
-coll = coll.reset_index(drop=True)
-#coll.to_csv(r"C:\Users\dludwinski\Desktop\wip\collaudit1", index=False)
-
-saves = []
-saves = pd.DataFrame(saves)
-
-save1 = pd.read_csv(r"C:\Users\dludwinski\Desktop\wip\nvpssaves9.5_9.9.csv", usecols=["SaveUser", "SaveMethod", "PolicyNumber", "Customer", "SaveDate"])
-save1.insert(0, "Company", "NVPS")
-
-save2 = pd.read_csv(r"C:\Users\dludwinski\Desktop\wip\aegissaves9.5_9.9.csv", usecols=["SaveUser", "SaveMethod", "PolicyNumber", "Customer", "SaveDate"])
-save2.insert(0, "Company", "AEGIS")
-
-saves = saves.append([save1, save2])
-saves["SaveDate"] = pd.to_datetime(saves["SaveDate"])
-saves["SaveDate"] = saves["SaveDate"].dt.date
-saves.sort_values("SaveDate")
-
-saves.insert(0, "In Date Range?", "")
-
-c = ["08/31/2021"]
-c = pd.DataFrame(a)
-#c = a.to_datetime
-#saves["In Date Range?"] = (saves["SaveDate"] <= a) == True
+payments = pd.concat([cpayments, apayments])
+payments.reset_index(drop=True, inplace=True)
 
 
+saves = pd.read_csv (r"C:\Users\dludwinski\Desktop\Cancels and Saves By User.csv",
+                     usecols=["PolicyNumber", "SaveMethod", "SaveUser", "SaveDate"])
+saves.dropna(inplace=True)
 
-coll.sort_values("UserName")
-coll = coll.reset_index(drop=True)
+audit = saves.loc[saves["SaveMethod"].str.startswith("Collected")]
+audit.reset_index(drop=True, inplace=True)
+
+audit = audit.loc[audit["SaveDate"].str.startswith("9/")]
+audit.reset_index(drop=True, inplace=True)
+
+saves1 = pd.read_csv (r"C:\Users\dludwinski\Desktop\Cancels and Saves By User (1).csv",
+                     usecols=["PolicyNumber", "SaveMethod", "SaveUser", "SaveDate"])
+saves1.dropna(inplace=True)
 
 
-a = coll["Policy #"].to_numpy()[:, None]
-b = saves["PolicyNumber"].to_numpy()
-count = (a == b).sum(axis=1)
+audit1 = saves1.loc[saves1["SaveMethod"].str.startswith("Collected")]
+audit1.reset_index(drop=True, inplace=True)
 
-df1 = ((count == 1))
-df1 = pd.DataFrame(df1)
-coll["Payment?"] = df1
+audit1 = audit1.loc[audit1["SaveDate"].str.startswith("9/")]
+audit1.reset_index(drop=True, inplace=True)
 
-coll.pivot(index="PolicyNumber", columns="Policy #")
+audit = pd.concat([audit, audit1])
+audit.sort_values("SaveUser", inplace=True)
 
-print(coll["Payment?"])
+""" Insert blank column for saves vs. 
+payments audit then complete the audit """
 
-coll.to_csv(r"C:\Users\dludwinski\Desktop\wip\collectionaudit1.csv", index=False)
+payments.insert(1, "Collected?", "")
 
-#audit0 = Counter(coll["Policy #"])
-#audit1 = Counter(coll["PolicyNumber"])
+pays = payments["Policy #"].to_numpy()[:, None]
+sa = audit["PolicyNumber"].to_numpy()
 
-#d_audit = ()
-#inboth = set(audit0) & set(audit1)
+payments["Collected?"] = ((pays == sa).sum(axis=1))
 
-#def audit():
-#    for elem in inboth:
-#        if audit1[elem] == 1: print(elem)
+paycount = payments.groupby("UserName").sum()
 
+
+merged = pd.merge(payments, audit, left_on="Policy #",
+                  right_on="PolicyNumber", how="inner")
+merged = merged.drop_duplicates(subset="Insured", keep="first")
+merged.reset_index(drop=True, inplace=True)
+
+print(merged)
+
+merged.to_excel(r"C:\Users\dludwinski\Desktop\paymentaudit2.xlsx", index=False)
+
+#merged = merged.groupby("SaveUser")
+
+#print(merged["Collected?"].count())
+#print(merged["Payment Amount"])
 
